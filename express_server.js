@@ -43,10 +43,19 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 })
 
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL
+  delete urlDatabase[shortURL];
+  res.redirect(`/urls`);
+})
+
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.render("urls_does_not_exist");
+  }
+  if (!urlDatabase[req.params.shortURL].includes("https://")) {
+    urlDatabase[req.params.shortURL] = "https://" + urlDatabase[req.params.shortURL]
   }
   res.render("urls_show", templateVars);
 });
