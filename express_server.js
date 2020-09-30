@@ -20,7 +20,7 @@ const generateRandomString = function(characters) {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect(`/urls`);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -77,7 +77,7 @@ app.post("/logout", (req, res) => {
 ///////>
 app.post("/register", (req, res) => {
   const email = req.body.email
-  const ID = generateRandomString(4) //This isn't enterprise level software. 4 characters should be enough.
+  const ID = generateRandomString(5) //This isn't enterprise level software. 5 characters should be enough.
   const password = req.body.password
   users[ID] = {ID, email, password};
   res.cookie("id", ID);
@@ -90,7 +90,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.render("urls_does_not_exist", templateVars);
   }
-  if (!urlDatabase[req.params.shortURL].includes("https://")) {
+  if (!urlDatabase[req.params.shortURL].includes("https://")) { //This functionality designed to handle a situation where a user enters a URL without the http prefix. Not perfect because it can only append for a secure connection but as most sites are secure these days I've left it at that.
     urlDatabase[req.params.shortURL] = "https://" + urlDatabase[req.params.shortURL];
   }
   res.render("urls_show", templateVars);
