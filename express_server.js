@@ -19,6 +19,24 @@ const generateRandomString = function(characters) {
   return randomString.generate(characters);
 };
 
+const emailLookup = function(users, email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user].email;
+    }
+  }
+  return false;
+};
+
+const IDLookup = function(users, email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return users[user].ID;
+    }
+  }
+  return false;
+};
+
 app.get("/", (req, res) => {
   res.redirect(`/urls`);
 });
@@ -28,22 +46,24 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["id"]];
-  const templateVars = { urls: urlDatabase, user: user };
-  console.log(templateVars.username);
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["id"]] };
   res.render("urls_index", templateVars);
 
 });
 
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["id"]];
-  const templateVars = { urls: urlDatabase, user: user  };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { user: users };
+  const templateVars = { user: users[req.cookies["id"]]};
   res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = { user: users[req.cookies["id"]] };
+  res.render("login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -63,30 +83,41 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls`);
 });
-
+///////>
 app.post("/login", (req, res) => {
-  const cookie = req.body.username;
-  res.cookie("username", cookie);
-  res.redirect(`/urls`);
+  const ID = IDLookup(users, req.body.email)
+  if (!emailLookup(users, req.body.email)) {
+    res.status(403).send('Sorry, that email does not exist');
+  } else if (users[ID].password !== req.body.password) {
+    res.status(403).send('Please enter a valid email and password');
+  } else {
+    const cookie = IDLookup(users, req.body.email);
+    res.cookie("id", cookie);
+    res.redirect(`/urls`);
+  }
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("id");
   res.redirect(`/urls`);
 });
-///////>
+
 app.post("/register", (req, res) => {
   const email = req.body.email
   const ID = generateRandomString(5) //This isn't enterprise level software. 5 characters should be enough.
   const password = req.body.password
+  if (email === "" || password === "" || emailLookup(users, email) === email) {
+    res.status(400).send('Please enter a valid email and password');
+  } else {
   users[ID] = {ID, email, password};
   res.cookie("id", ID);
   res.redirect(`/urls`);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const user = users[req.cookies["id"]];
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["id"]] };
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.render("urls_does_not_exist", templateVars);
   }
