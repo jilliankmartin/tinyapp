@@ -28,19 +28,21 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const user = users[req.cookies["id"]];
+  const templateVars = { urls: urlDatabase, user: user };
   console.log(templateVars.username);
   res.render("urls_index", templateVars);
 
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const user = users[req.cookies["id"]];
+  const templateVars = { urls: urlDatabase, user: user  };
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user: users };
   res.render("register", templateVars);
 });
 
@@ -83,7 +85,8 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] };
+  const user = users[req.cookies["id"]];
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: user };
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.render("urls_does_not_exist", templateVars);
   }
