@@ -90,7 +90,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
     res.render("urls_does_not_exist", templateVars);
   }
-  if (!urlDatabase[req.params.shortURL].includes("https://")) { //This functionality designed to handle a situation where a user enters a URL without the http prefix. Not perfect because it can only append for a secure connection but as most sites are secure these days I've left it at that.
+  if (!urlDatabase[req.params.shortURL].includes("https://") && !urlDatabase[req.params.shortURL].includes("http://")) { //This functionality designed to handle a situation where a user enters a URL without the http prefix. Not perfect because it can only append for a secure connection but as most sites are secure these days I've left it at that.
     urlDatabase[req.params.shortURL] = "https://" + urlDatabase[req.params.shortURL];
   }
   res.render("urls_show", templateVars);
