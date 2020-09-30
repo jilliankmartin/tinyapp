@@ -13,8 +13,10 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const generateRandomString = function() {
-  return randomString.generate(6);
+const users = {};
+
+const generateRandomString = function(characters) {
+  return randomString.generate(characters);
 };
 
 app.get("/", (req, res) => {
@@ -43,7 +45,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
+  const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
@@ -68,6 +70,15 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("username");
+  res.redirect(`/urls`);
+});
+///////>
+app.post("/register", (req, res) => {
+  const email = req.body.email
+  const ID = generateRandomString(4) //This isn't enterprise level software. 4 characters should be enough.
+  const password = req.body.password
+  users[ID] = {ID, email, password};
+  res.cookie("id", ID);
   res.redirect(`/urls`);
 });
 
