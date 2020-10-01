@@ -90,9 +90,14 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (req.cookies.id){
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
+  } else {
+    res.status(401).send('Sorry, you do not have permission to do that');
+    console.log("Attempted command line deletion was blocked");
+  }
 });
 
 app.post("/urls/:shortURL", (req, res) => {
@@ -100,7 +105,7 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
-///////>
+
 app.post("/login", (req, res) => {
   const ID = IDLookup(users, req.body.email)
   if (!emailLookup(users, req.body.email)) {
@@ -142,7 +147,6 @@ app.get("/urls/:shortURL", (req, res) => {
   } else {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.cookies["id"]] };
   res.render("urls_show", templateVars);
-  console.log(urlDatabase[req.params.shortURL])
   }
 });
 
