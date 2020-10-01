@@ -4,6 +4,7 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const randomString = require("randomstring");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set("view engine", "ejs");
@@ -110,7 +111,7 @@ app.post("/login", (req, res) => {
   const ID = IDLookup(users, req.body.email)
   if (!emailLookup(users, req.body.email)) {
     res.status(403).send('Sorry, that email does not exist');
-  } else if (users[ID].password !== req.body.password) {
+  } else if (!bcrypt.compareSync(req.body.password, users[ID].password)) {
     res.status(403).send('Please enter a valid email and password');
   } else {
     const cookie = IDLookup(users, req.body.email);
@@ -125,13 +126,15 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const email = req.body.email
-  const ID = generateRandomString(5) //This isn't enterprise level software. 5 characters should be enough.
-  const password = req.body.password
+  const email = req.body.email;
+  const ID = generateRandomString(5); //This isn't enterprise level software. 5 characters should be enough.
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   if (email === "" || password === "" || emailLookup(users, email) === email) {
     res.status(400).send('Please enter a valid email and password');
   } else {
-  users[ID] = {ID, email, password};
+  users[ID] = {ID, email, password: hashedPassword};
+  console.log(users);
   res.cookie("id", ID);
   res.redirect(`/urls`);
   }
