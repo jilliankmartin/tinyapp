@@ -2,11 +2,9 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const randomString = require("randomstring");
 const cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
-const { emailLookup, IDLookup, urlsForUser } = require('./helpers')
-
+const { emailLookup, IDLookup, urlsForUser, generateRandomString } = require('./helpers')
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
@@ -21,9 +19,7 @@ const urlDatabase = {};
 
 const users = {};
 
-const generateRandomString = function(characters) {
-  return randomString.generate(characters);
-};
+
 
 app.get("/", (req, res) => {
   res.redirect(`/urls`);
@@ -39,8 +35,14 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: userSpecificUrls, user: users[req.session["id"]] };
   res.render("urls_index", templateVars);
   } else {
-    res.redirect(`/login`);
+    res.redirect(`urls/mustlogin`);
   }
+});
+
+app.get("/urls/mustlogin", (req, res) => {
+  const userSpecificUrls = urlsForUser(urlDatabase, req.session.id);
+  const templateVars = { urls: userSpecificUrls, user: users[req.session["id"]] };
+  res.render("must_log_in", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
