@@ -15,10 +15,9 @@
     <%- include('partials/_header') %>
 
     <main style="margin: 1em;">
-      <div style="margin-bottom: 40px; margin-top: 40px;">
-      <h2>You must log in to edit and create new URLs</h2>
-      </div>
       <h3>Login</h3>
+      <br/>
+      <p style="color:red">Invalid email or password</p>
       <form action="/login" method="POST">
         <div class="form-group mb-2">
           <label for="email">Email address</label>
@@ -28,8 +27,10 @@
           <label for="password">Password</label>
           <input type="password" class="form-control" name="password" placeholder="Password">
         </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-primary">Login</button>
       </form>
+      </br>
+      <p>Don't have an account? <a href="/register">Register</a></p>
     </main>
       <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

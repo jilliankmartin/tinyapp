@@ -2,15 +2,13 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const { emailLookup, IDLookup, urlsForUser, generateRandomString } = require('./helpers')
+const { emailLookup, IDLookup, urlsForUser, generateRandomString } = require('./helpers');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
   keys: ['supersecretkeythatwouldnormallynotbeintheserverfile', 'oopsanotherkeythatistechnicallyexposedandshouldntbeandwontbeinfuture'],
-
-  // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
 app.set("view engine", "ejs");
@@ -19,13 +17,11 @@ const urlDatabase = {};
 
 const users = {};
 
-
-
 app.get("/", (req, res) => {
   if (req.session.id) {
     res.redirect(`/urls`);
   } else {
-  res.redirect(`/login`);
+    res.redirect(`/login`);
   }
 });
 
@@ -35,9 +31,9 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   if (req.session.id) {
-  const userSpecificUrls = urlsForUser(urlDatabase, req.session.id);
-  const templateVars = { urls: userSpecificUrls, user: users[req.session["id"]] };
-  res.render("urls_index", templateVars);
+    const userSpecificUrls = urlsForUser(urlDatabase, req.session.id);
+    const templateVars = { urls: userSpecificUrls, user: users[req.session["id"]] };
+    res.render("urls_index", templateVars);
   } else {
     res.redirect(`urls/mustlogin`);
   }
@@ -49,18 +45,32 @@ app.get("/urls/mustlogin", (req, res) => {
   res.render("must_log_in", templateVars);
 });
 
+app.get("/doesnotexist", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, user: users[req.session["id"]] };
+  res.render("does_not_exist", templateVars);
+});
+
+app.get("/invalidlogin", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, user: users[req.session["id"]] };
+  res.render("invalid_login", templateVars);
+});
+
+app.get("/invalidregistration", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, user: users[req.session["id"]] };
+  res.render("invalid_register", templateVars);
+});
+
 app.get("/urls/new", (req, res) => {
-  if (req.session.id){
-  const templateVars = { urls: urlDatabase, user: users[req.session["id"]] };
-  res.render("urls_new", templateVars);
-  }
-  else {
+  if (req.session.id) {
+    const templateVars = { urls: urlDatabase, user: users[req.session["id"]] };
+    res.render("urls_new", templateVars);
+  } else {
     res.redirect(`/login`);
   }
 });
 
 app.get("/register", (req, res) => {
-  if (req.session.id){
+  if (req.session.id) {
     res.redirect(`/urls`);
   }
   const templateVars = { user: users[req.session["id"]]};
@@ -68,7 +78,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (req.session.id){
+  if (req.session.id) {
     res.redirect(`/urls`);
   }
   const templateVars = { user: users[req.session["id"]] };
@@ -76,8 +86,8 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/:shortURL/delete", (req, res) => {
-  if (req.session.id){
-  res.redirect(`/urls`);
+  if (req.session.id) {
+    res.redirect(`/urls`);
   }
   res.redirect(`/urls/mustlogin`);
 });
@@ -89,10 +99,10 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (req.session.id){
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect(`/urls`);
+  if (req.session.id) {
+    const shortURL = req.params.shortURL;
+    delete urlDatabase[shortURL];
+    res.redirect(`/urls`);
   } else {
     res.status(401).send('Sorry, you do not have permission to do that');
     console.log("Attempted command line deletion was blocked");
@@ -106,20 +116,19 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const ID = IDLookup(users, req.body.email)
+  const ID = IDLookup(users, req.body.email);
   if (!emailLookup(users, req.body.email)) {
-    res.status(403).send('Sorry, that email does not exist');
+    res.redirect(`/invalidlogin`);
   } else if (!bcrypt.compareSync(req.body.password, users[ID].password)) {
-    res.status(403).send('Please enter a valid email and password');
+    res.redirect(`/invalidlogin`);
   } else {
-    const cookie = IDLookup(users, req.body.email);
     req.session.id = ID;
     res.redirect(`/urls`);
   }
 });
 
 app.post("/logout", (req, res) => {
-  req.session = null
+  req.session = null;
   res.redirect(`/urls`);
 });
 
@@ -129,33 +138,33 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   if (email === "" || password === "" || emailLookup(users, email) === email) {
-    res.status(400).send('Please enter a valid email and password');
+    res.redirect(`/invalidregistration`);
   } else {
-  users[ID] = {ID, email, password: hashedPassword};
-  req.session.id = ID;
-  res.redirect(`/urls`);
+    users[ID] = {ID, email, password: hashedPassword};
+    req.session.id = ID;
+    res.redirect(`/urls`);
   }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const userSpecificUrls = urlsForUser(urlDatabase, req.session.id);
-  const usersShortUrls = Object.keys(userSpecificUrls)
+  const usersShortUrls = Object.keys(userSpecificUrls);
   if  (urlDatabase[req.params.shortURL] === undefined) {
-    res.status(404).send('Sorry, that URL does not exist');
+    res.redirect(`/doesnotexist`);
   } else if (!req.session.id || !usersShortUrls.includes(req.params.shortURL)) {
     res.redirect(`/urls/mustlogin`);
   } else {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session["id"]] };
-  res.render("urls_show", templateVars);
+    const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session["id"]] };
+    res.render("urls_show", templateVars);
   }
 });
 
 app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL] === undefined) {
-    res.redirect(`/urls/mustlogin`);
+    res.redirect(`/doesnotexist`);
   } else {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
   }
 });
 
