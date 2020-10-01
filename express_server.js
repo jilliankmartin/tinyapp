@@ -8,7 +8,7 @@ const { emailLookup, IDLookup, urlsForUser, generateRandomString } = require('./
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1', 'key2'],
+  keys: ['supersecretkeythatwouldnormallynotbeintheserverfile', 'oopsanotherkeythatistechnicallyexposedandshouldntbeandwontbeinfuture'],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -22,7 +22,11 @@ const users = {};
 
 
 app.get("/", (req, res) => {
-  res.redirect(`/urls`);
+  if (req.session.id) {
+    res.redirect(`/urls`);
+  } else {
+  res.redirect(`/login`);
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -56,13 +60,26 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (req.session.id){
+    res.redirect(`/urls`);
+  }
   const templateVars = { user: users[req.session["id"]]};
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
+  if (req.session.id){
+    res.redirect(`/urls`);
+  }
   const templateVars = { user: users[req.session["id"]] };
   res.render("login", templateVars);
+});
+
+app.get("/urls/:shortURL/delete", (req, res) => {
+  if (req.session.id){
+  res.redirect(`/urls`);
+  }
+  res.redirect(`/urls/mustlogin`);
 });
 
 app.post("/urls", (req, res) => {
@@ -126,7 +143,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if  (urlDatabase[req.params.shortURL] === undefined) {
     res.status(404).send('Sorry, that URL does not exist');
   } else if (!req.session.id || !usersShortUrls.includes(req.params.shortURL)) {
-    res.status(401).send('Sorry, you do not have permission to view this page');
+    res.redirect(`/urls/mustlogin`);
   } else {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session["id"]] };
   res.render("urls_show", templateVars);
@@ -134,8 +151,12 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  if (urlDatabase[req.params.shortURL] === undefined) {
+    res.redirect(`/urls/mustlogin`);
+  } else {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
+  }
 });
 
 app.listen(PORT, () => {
